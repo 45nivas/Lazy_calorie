@@ -1,0 +1,335 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Voice Calorie Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 750px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 38px 36px 36px 36px;
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      color: #1a365d;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+      font-size: 2.2em;
+      font-weight: 700;
+    }
+    .summary-card {
+      background: linear-gradient(90deg, #eaf6ff 60%, #f3f7fa 100%);
+      border-radius: 14px;
+      padding: 22px 28px;
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s;
+    }
+    .summary-card .macro {
+      margin: 0 18px;
+      text-align: center;
+      min-width: 80px;
+    }
+    .summary-card .macro span {
+      display: block;
+      font-size: 2em;
+      font-weight: bold;
+      color: #0074d9;
+      transition: color 0.2s;
+    }
+    .meal-form {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #transcript {
+      flex: 1;
+      min-width: 180px;
+      background: #f3f3f3;
+      border-radius: 6px;
+      padding: 10px 14px;
+      border: 1px solid #e0e0e0;
+      margin: 0 8px;
+      font-size: 1.08em;
+      transition: border 0.2s;
+    }
+    button {
+      background: linear-gradient(90deg, #0074d9 60%, #005fa3 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 22px;
+      font-size: 1.08em;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    button:disabled {
+      background: #b0c4d9;
+      cursor: not-allowed;
+    }
+    button:hover:enabled {
+      background: linear-gradient(90deg, #005fa3 60%, #0074d9 100%);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #e74c3c;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .icon-btn:hover {
+      background: #ffeaea;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+    th, td {
+      padding: 11px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+    }
+    th {
+      background: #f3f7fa;
+      color: #2d3e50;
+      font-weight: 600;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .footer {
+      text-align: center;
+      color: #aaa;
+      margin-top: 40px;
+      font-size: 0.97em;
+    }
+    .toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: #0074d9;
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 1.08em;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.13);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s, top 0.4s;
+      z-index: 9999;
+    }
+    .toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      top: 44px;
+    }
+    @media (max-width: 700px) {
+      .container { padding: 10px 2vw; }
+      .summary-card { flex-direction: column; gap: 12px; }
+      .meal-form { flex-direction: column; gap: 10px; }
+      th, td { font-size: 0.99em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Voice Calorie Tracker</h1>
+    <div class="summary-card" id="summary-card">
+      <div class="macro">
+        <span id="sum-cal">0</span>
+        Calories
+      </div>
+      <div class="macro">
+        <span id="sum-protein">0</span>
+        Protein (g)
+      </div>
+      <div class="macro">
+        <span id="sum-carbs">0</span>
+        Carbs (g)
+      </div>
+      <div class="macro">
+        <span id="sum-fat">0</span>
+        Fat (g)
+      </div>
+    </div>
+    <form class="meal-form" onsubmit="return false;">
+      <button type="button" id="record"><span>🎤</span> Record</button>
+      <span id="transcript" placeholder="Say your meal..."></span>
+      <button type="button" id="log" disabled><span>➕</span> Log Meal</button>
+    </form>
+    <h2 style="margin-top:30px;">Today's Meals</h2>
+    <table id="meal-table">
+      <thead>
+        <tr>
+          <th>Food</th>
+          <th>Qty</th>
+          <th>Unit</th>
+          <th>Calories</th>
+          <th>Protein</th>
+          <th>Carbs</th>
+          <th>Fat</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="meal-tbody">
+        <!-- Meals will be inserted here -->
+      </tbody>
+    </table>
+    <div class="footer">
+      Powered by Django, Ollama, and Nutritionix | Inspired by MyFitnessPal
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+  <script>
+    let transcript = '';
+    const recordBtn = document.getElementById('record');
+    const logBtn = document.getElementById('log');
+    const transcriptP = document.getElementById('transcript');
+    const summaryCard = document.getElementById('summary-card');
+    const mealTbody = document.getElementById('meal-tbody');
+    const toast = document.getElementById('toast');
+
+    // Toast notification
+    function showToast(msg, color='#0074d9') {
+      toast.textContent = msg;
+      toast.style.background = color;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // Animate summary numbers
+    function animateValue(id, start, end, duration=600) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const range = end - start;
+      let startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+        el.textContent = Math.round(start + range * progress);
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = Math.round(end);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // Web Speech API
+    recordBtn.onclick = () => {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-IN';
+      recognition.start();
+      recognition.onresult = (event) => {
+        transcript = event.results[0][0].transcript;
+        transcriptP.textContent = transcript;
+        logBtn.disabled = false;
+      };
+      recognition.onerror = () => showToast("Speech recognition error", "#e74c3c");
+    };
+
+    logBtn.onclick = () => {
+      fetch('/api/voice-log/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text: transcript})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.logged) {
+          showToast("Logged: " + data.logged.map(f => f.food).join(', '), "#27ae60");
+        } else {
+          showToast("Error: " + (data.error || JSON.stringify(data)), "#e74c3c");
+        }
+        transcriptP.textContent = '';
+        logBtn.disabled = true;
+        fetchSummary();
+        fetchMeals();
+      });
+    };
+
+    function fetchSummary() {
+      fetch('/api/get-daily-summary/')
+        .then(res => res.json())
+        .then(data => {
+          animateValue('sum-cal', Number(document.getElementById('sum-cal').textContent), Math.round(data.total_calories || 0));
+          animateValue('sum-protein', Number(document.getElementById('sum-protein').textContent), Math.round(data.total_protein || 0));
+          animateValue('sum-carbs', Number(document.getElementById('sum-carbs').textContent), Math.round(data.total_carbs || 0));
+          animateValue('sum-fat', Number(document.getElementById('sum-fat').textContent), Math.round(data.total_fats || 0));
+        });
+    }
+
+    function fetchMeals() {
+      fetch('/api/get-daily-meals/')
+        .then(res => res.json())
+        .then(data => {
+          mealTbody.innerHTML = '';
+          (data.meals || []).forEach(meal => {
+            mealTbody.innerHTML += `
+              <tr>
+                <td>${meal.food}</td>
+                <td>${meal.quantity}</td>
+                <td>${meal.unit || ''}</td>
+                <td>${meal.calories}</td>
+                <td>${meal.protein}</td>
+                <td>${meal.carbs}</td>
+                <td>${meal.fat}</td>
+                <td><button class="icon-btn" title="Delete" onclick="deleteMeal('${meal.id}')">🗑️</button></td>
+              </tr>
+            `;
+          });
+        });
+    }
+
+    // Delete meal (requires backend endpoint)
+    window.deleteMeal = function(id) {
+      fetch('/api/delete-meal/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({id})
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast("Meal deleted", "#e67e22");
+          fetchSummary();
+          fetchMeals();
+        } else {
+          showToast("Delete failed", "#e74c3c");
+        }
+      });
+    };
+
+    fetchSummary();
+    fetchMeals();
+  </script>
+</body>
+</html>
